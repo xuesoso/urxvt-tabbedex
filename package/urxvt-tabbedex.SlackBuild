@@ -1,0 +1,49 @@
+#!/bin/sh
+
+set -eu
+
+app=urxvt-tabbedex
+TAG=${TAG:-1}
+
+if [ -n "${VERSION:+set}" ]; then
+	:
+elif [ -e .version ]; then
+	VERSION=$(cat .version)
+else
+	VERSION=$(git log -1 --format=%cd_%h --date=format:%g.%-V%u)
+fi
+test -n "$VERSION"
+
+tmp=$(mktemp -d)
+trap 'rm -rf -- "$tmp"' 0
+
+libdir=lib
+case ${ARCH:-$(uname -m)} in x86_64)
+	libdir=lib64
+esac
+
+make "DESTDIR=$tmp" LIBDIR="$libdir" DOCDIR="doc/$app-$VERSION" install
+
+mkdir -p -- "$tmp/install"
+fmt -uw$(( 77 - ${#app} )) <<EOF | sed "s/^/$app: /" >$tmp/install/slack-desc
+$app (A tabbed terminal for rxvt-unicode)
+
+Adds tabs to the rxvt-unicode terminal (a.k.a. urxvt) making it possible to run
+multiple terminals in a single X11 window.  A tab-bar at the top shows how many
+slave terminals or tabs exist and allows switching between them.
+
+The extension can be configured via X11 resources.  For full documentation of
+available options see ‘man urxvt-tabbedex’.
+
+Plugin home page: https://github.com/mina86/urxvt-tabbedex
+EOF
+
+echo
+
+# Use tar directly so we can use --owner, --group and --mode
+output=${TMP:-/tmp}/$app-$VERSION-noarch-$TAG.txz
+tar Jcvf "$output" -C "$tmp" --sort=name --owner=0 --group=0 --mode=a+rX .
+
+echo
+echo "Slackware package $output created."
+echo
