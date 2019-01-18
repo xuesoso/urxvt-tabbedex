@@ -1605,6 +1605,7 @@ sub apply {
 		$bar->_append(' ' x ($bar->{ncol} - length $bar->{text}),
 		              $bar->{pad_colour});
 	} elsif ($bar->{ncol} < length $bar->{text}) {
+		print length($bar->{text}) . '/' . $bar->{ncol} . "\n";
 		$bar->{text} = substr $bar->{text}, 0, $bar->{ncol};
 		splice @{ $bar->{rend} }, $bar->{ncol};
 	}
